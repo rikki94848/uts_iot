@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Suhu dan Kelembaban</title>
+    <style>
+      /* Reset default styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f7fc;
+        color: #333;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #4caf50;
+        margin-bottom: 30px;
+      }
+
+      h3 {
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      p {
+        font-size: 16px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+      }
+
+      .data-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .data-section {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .data-section:last-child {
+        border-bottom: none;
+      }
+
+      .info-card {
+        background-color: #f9f9f9;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .info-card p {
+        font-size: 14px;
+        color: #555;
+      }
+
+      .info-card strong {
+        color: #4caf50;
+      }
+
+      .month-year-list {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .month-year-list li {
+        background-color: #f1f1f1;
+        margin: 5px 0;
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+
+      /* Error and success messages */
+      .error-message {
+        color: red;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .loading-message {
+        color: #999;
+        font-style: italic;
+        text-align: center;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Data Suhu dan Kelembaban</h1>
+
+    <!-- Show data -->
+    <div id="data-container" class="data-container">
+      <p class="loading-message">Memuat data...</p>
+    </div>
+
+    <script>
+      function fetchData() {
+        fetch("data.php")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Jaringan tidak tersedia");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            const container = document.getElementById("data-container");
+            container.innerHTML = ""; // Clear loading message
+
+            if (data && typeof data === "object") {
+              const suhuInfo = `
+                <div class="data-section">
+                  <h3>Informasi Suhu</h3>
+                  <div class="info-card">
+                    <p><strong>Suhu Max:</strong> ${data.suhumax} °C</p>
+                    <p><strong>Suhu Min:</strong> ${data.suhumin} °C</p>
+                    <p><strong>Rata-Rata Suhu:</strong> ${data.suhurata} °C</p>
+                  </div>
+                </div>
+              `;
+              container.innerHTML += suhuInfo;
+
+              const nilaiSuhu = data.nilai_suhu_max_humid_max
+                .map((entry) => {
+                  return `
+                    <div class="data-section">
+                      <h3>Data ${entry.timestamp}</h3>
+                      <div class="info-card">
+                        <p><strong>Suhu:</strong> ${entry.suhu} °C</p>
+                        <p><strong>Kelembaban:</strong> ${entry.humid} %</p>
+                        <p><strong>Kecerahan:</strong> ${entry.kecerahan} %</p>
+                      </div>
+                    </div>
+                  `;
+                })
+                .join("");
+              container.innerHTML += nilaiSuhu;
+
+              const bulanTahunMax = data.month_year_max
+                .map((entry) => {
+                  return `<li>${entry.month_year}</li>`;
+                })
+                .join("");
+              container.innerHTML += ` 
+                <div class="data-section">
+                  <h3>Bulan/Tahun Maksimal</h3>
+                  <ul class="month-year-list">${bulanTahunMax}</ul>
+                </div>
+              `;
+            } else {
+              console.error("Data tidak valid:", data);
+              container.innerHTML =
+                "<p class='error-message'>Data tidak valid.</p>";
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById(
+              "data-container"
+            ).innerHTML = `<p class="error-message">Error: ${error.message}</p>`;
+          });
+      }
+
+      document.addEventListener("DOMContentLoaded", fetchData);
+    </script>
+  </body>
+</html>
